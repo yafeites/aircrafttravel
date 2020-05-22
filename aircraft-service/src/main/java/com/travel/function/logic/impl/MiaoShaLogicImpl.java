@@ -44,6 +44,8 @@ public class MiaoShaLogicImpl implements MiaoShaLogic {
 
     @Override
     public OrderInfo createOrder(MiaoShaUser user, GoodsVo goods) {
+//        其实感觉这里将秒杀信息表放上面比较好,防止多回滚
+//        生成订单信息表
         OrderInfo orderInfo = new OrderInfo();
         orderInfo.setCreateDate(new Date());
         orderInfo.setDeliveryAddrId(0L);
@@ -55,6 +57,7 @@ public class MiaoShaLogicImpl implements MiaoShaLogic {
         orderInfo.setStatus(0);
         orderInfo.setUserId(user.getId());
         orderInfoDao.insertSelective(orderInfo);
+//        秒杀信息表
         MiaoShaOrder miaoshaOrder = new MiaoShaOrder();
         miaoshaOrder.setGoodsId(goods.getId());
         miaoshaOrder.setOrderId(orderInfo.getId());

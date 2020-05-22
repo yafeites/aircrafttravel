@@ -52,7 +52,7 @@
      <tr>  
         <td>秒杀开始时间</td>  
         <td id="startTime"></td>
-        <td >	
+        <td>
         	<input type="hidden" id="remainSeconds" />
         	<span id="miaoshaTip"></span>
         </td>
@@ -88,8 +88,6 @@
 </div>
 </body>
 <script>
-
-
     function toLogin(){
         window.location.href="/login/to_login";
     }
@@ -196,7 +194,7 @@ function render(detail){
 	$("#stockCount").text(goods.stockCount);
 	countDown();
 }
-
+//自动执行函数
 $(function(){
 	//countDown();
 	getDetail();
@@ -214,7 +212,8 @@ function getDetail(){
 			if(data.code == 0){
 				render(data.data);
 			}else{
-				layer.msg(data.message);
+			    // layer.msg("i am here");
+				 layer.msg(data.message);
 			}
 		},
 		error:function(data){

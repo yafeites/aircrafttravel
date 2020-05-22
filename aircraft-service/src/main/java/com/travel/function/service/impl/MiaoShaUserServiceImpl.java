@@ -92,7 +92,7 @@ public class MiaoShaUserServiceImpl implements MiaoShaUserService {
     public ResultGeekQ<MiaoShaUserVo> getByName(String name) {
         ResultGeekQ<MiaoShaUserVo> resultGeekQ  = ResultGeekQ.build();
         try{
-            MiaoShaUser user = miaoShaUserDao.getByName(name);;
+            MiaoShaUser user = miaoShaUserDao.getByName(name);
             MiaoShaUserVo userVo = new MiaoShaUserVo();
             BeanUtils.copyProperties(user,userVo);
             resultGeekQ.setData(userVo);

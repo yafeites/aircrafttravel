@@ -87,6 +87,7 @@ public class RandomValidateCodeService {
         }
         log.info(randomString);
         g.dispose();
+        //将验证码结果放在redis里面
         redisClient.set(MiaoshaKey.getMiaoshaVerifyCode, user.getNickname() + ":" + goodsId, randomString);
         return image;
     }
@@ -130,7 +131,7 @@ public class RandomValidateCodeService {
         }
         String codeOld = (String) redisClient.get(MiaoshaKey.getMiaoshaVerifyCode,
                 user.getNickname() + ":" + goodsId, String.class);
-        //验证验证码 是否 正确
+        //验证验证码 是否 正确,时间太长redis中的结果会消失
         if(StringUtils.isEmpty(codeOld) || !codeOld.equals(verifyCode)){
             return false;
         }

@@ -11,7 +11,7 @@
     id, user_id, order_id, goods_id
   </sql>
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
-    select 
+    select
     <include refid="Base_Column_List" />
     from miaosha_order
     where id = #{id,jdbcType=BIGINT}

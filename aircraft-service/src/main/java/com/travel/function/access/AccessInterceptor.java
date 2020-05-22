@@ -49,9 +49,14 @@ public class AccessInterceptor  extends HandlerInterceptorAdapter {
 		 * 当然 你可以去排除 如果已经排除那就用不到这了  addPathPatterns("/**");
 		 * so 在这里进行 静态资源handler 排除
 		 */
+
+
 		if(handler instanceof ResourceHttpRequestHandler) {
 			log.info("---------ResourceHttpRequestHandler-------" + handler.toString() + "------------");
 		}else if(handler instanceof HandlerMethod) {
+			/**
+			 * 对于一个特定的页面,允许同一个用户在一段时间里访问次数
+			 */
 			log.info("打印拦截方法handler ：{} ",handler);
 			HandlerMethod hm = (HandlerMethod)handler;
 			MiaoShaUser user = getUser(request, response);
@@ -77,7 +82,7 @@ public class AccessInterceptor  extends HandlerInterceptorAdapter {
 			//************************  设置redis等限流配置  **********************************
 			AccessKey ak = AccessKey.withExpire(seconds);
 			Integer count = (Integer) redisService.get(ak, key, Integer.class);
-			if(count  == null) {
+				if(count  == null) {
 	    		 redisService.set(ak, key, 1);
 	    	}else if(count < maxCount) {
 	    		 redisService.incr(ak, key);

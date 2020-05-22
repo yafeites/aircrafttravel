@@ -1,8 +1,9 @@
 spring:
   datasource:
     username: root
-    password: xxxx
-    url: jdbc:mysql://xxxxxx:3306/miaosha?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
+    password: root
+    #改成自己的数据库地址
+    url: jdbc:mysql://192.168.14.3:3306/miaosha?useUnicode=true&characterEncoding=utf-8&allowMultiQueries=true&useSSL=false
     type: com.alibaba.druid.pool.DruidDataSource
     driver-class-name: com.mysql.jdbc.Driver
   thymeleaf:
@@ -44,7 +45,6 @@ mybatis:
   type-aliases-package: com.travel.function.entity,com.travel.function.vo
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
 pageCache:
   enable: true
 logging:

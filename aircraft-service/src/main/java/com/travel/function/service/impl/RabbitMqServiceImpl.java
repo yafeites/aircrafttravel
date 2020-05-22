@@ -64,7 +64,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
         //减库存 下订单 写入秒杀订单
         MiaoShaUserVo userVo = new MiaoShaUserVo();
         BeanUtils.copyProperties(user, userVo);
-        //秒杀失败
+//        开始秒杀
         ResultGeekQ<OrderInfoVo> msR = miaoshaService.miaosha(userVo, goods);
         if(!ResultGeekQ.isSuccess(msR)){
             //************************ 秒杀失败 回退操作 **************************************
@@ -84,6 +84,7 @@ public class RabbitMqServiceImpl implements RabbitMqService {
         }
         OrderInfoVo orderInfo = msR.getData();
         //******************  如果成功则进行保存redis + flag ****************************
+//      将订单信息写入redis
         String msKey  = CommonMethod.getMiaoshaOrderRedisKey(String.valueOf(orderInfo.getUserId()), String.valueOf(goodsId));
         redisClient.set(msKey, msR.getData());
 

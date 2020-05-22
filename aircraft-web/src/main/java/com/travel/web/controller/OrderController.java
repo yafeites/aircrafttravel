@@ -42,11 +42,13 @@ public class OrderController {
 				result.withError(ResultStatus.SESSION_ERROR);
 				return result;
 			}
+			//获得订单信息
 			ResultGeekQ<OrderInfoVo> orderR = orderService.getOrderById(orderId);
 			if(!ResultGeekQ.isSuccess(orderR)){
 				result.withError(orderR.getCode(),orderR.getMessage());
 				return result;
 			}
+			//获得商品信息
 			Long goodsId = orderR.getData().getGoodsId();
 			ResultGeekQ<GoodsVo> goodsR = goodsService.goodsVoByGoodId(goodsId);
 			if(!ResultGeekQ.isSuccess(goodsR)){

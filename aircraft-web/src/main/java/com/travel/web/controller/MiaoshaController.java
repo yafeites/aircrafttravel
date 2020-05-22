@@ -36,6 +36,7 @@ import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.awt.image.BufferedImage;
 import java.io.OutputStream;
 import java.util.List;
@@ -73,7 +74,7 @@ public class MiaoshaController {
     @Autowired
     private ZkApi zooKeeper;
 
-
+    //初始化时从数据库中将秒杀商品的数量写入redis中
     @PostConstruct
     public void init() throws Exception {
         ResultGeekQ<List<GoodsVo>> goodsListR = goodsService.goodsVoList();
@@ -100,7 +101,7 @@ public class MiaoshaController {
                 result.withError(SESSION_ERROR.getCode(), SESSION_ERROR.getMessage());
                 return result;
             }
-
+            // TODO 这里好像和设置的时候的redis的key对不上？
             String redisK =  CommonMethod.getMiaoshaOrderWaitFlagRedisKey(String.valueOf(user.getNickname()), String.valueOf(goodsId));
             //判断redis里的排队标记，排队标记不为空返回还在排队中
             //一定要先判断排队标记再判断是否已生成订单，不然又会存在并发的时间差问题
@@ -140,6 +141,7 @@ public class MiaoshaController {
             //验证path
             MiaoShaUserVo userVo = new MiaoShaUserVo();
             BeanUtils.copyProperties(user, userVo);
+            // 验证秒杀地址主要是为了防止用户通过固定地址直接访问url直接秒杀
             ResultGeekQ<Boolean> check = miaoshaService.checkPath(userVo, goodsId, path);
             if (!ResultGeekQ.isSuccess(check)) {
                 result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
@@ -147,6 +149,7 @@ public class MiaoshaController {
             }
 
             //zk 内存标记 相比用redis里的库存来判断减少了与redis的交互次数 todo  NEW
+            // TODO 这里error提醒没有库存比较好?
             if (ProductSoutOutMap.productSoldOutMap.get(goodsId) != null) {
                 result.withError(MIAOSHA_LOCAL_GOODS_NO.getCode(), MIAOSHA_LOCAL_GOODS_NO.getMessage());
                 return result;
@@ -157,20 +160,21 @@ public class MiaoshaController {
                 result.withError(MIAOSHA_QUEUE_ING.getCode(), MIAOSHA_QUEUE_ING.getMessage());
                 return result;
             }
+            // TODO 这里查看商品是否存在意义在哪?
 
-            //校验时间 防止刷时间
             ResultGeekQ<GoodsVo> goodR = goodsService.goodsVoByGoodId(Long.valueOf(goodsId));
             if (!ResultGeekQ.isSuccess(goodR)) {
                 result.withError(PRODUCT_NOT_EXIST.getCode(), PRODUCT_NOT_EXIST.getMessage());
                 return result;
             }
+            //校验时间 防止刷时间
             ResultGeekQ validR = ValidMSTime.validMiaoshaTime(goodR.getData());
             if (!ResultGeekQ.isSuccess(validR)) {
                 result.withError(validR.getCode(), validR.getMessage());
                 return result;
             }
 
-            //是否已经秒杀到
+            //是否已经秒杀到(即是否存在订单)
             ResultGeekQ<MiaoShaOrderVo> order = orderService.getMiaoshaOrderByUserIdGoodsId(Long.valueOf(user.getNickname()), goodsId);
             if (!ResultGeekQ.isSuccess(order)) {
                 result.withError(REPEATE_MIAOSHA.getCode(), REPEATE_MIAOSHA.getMessage());
@@ -232,7 +236,7 @@ public class MiaoshaController {
             return result;
         }
     }
-
+    //证实验证码
     @UserCheckAndLimit(seconds = 5, maxCount = 5, needLogin = true)
     @RequestMapping(value = "/path", method = RequestMethod.GET)
     @ResponseBody
@@ -248,6 +252,7 @@ public class MiaoshaController {
 
         MiaoShaUserVo userVo = new MiaoShaUserVo();
         BeanUtils.copyProperties(user, userVo);
+        //检查验证码正确性
         boolean check = codeService.checkVerifyCode(userVo, goodsId, verifyCode);
         if (!check) {
             result.withError(REQUEST_ILLEGAL.getCode(), REQUEST_ILLEGAL.getMessage());
@@ -268,12 +273,14 @@ public class MiaoshaController {
 
         ResultGeekQ<Boolean> resultGeekQ = ResultGeekQ.build();
         try {
+            //redis操作原子性
             Long stock = redisService.decr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
             if (stock == null) {
                 log.error("***数据还未准备好***");
                 resultGeekQ.withError(MIAOSHA_DEDUCT_FAIL.getCode(), MIAOSHA_DEDUCT_FAIL.getMessage());
                 return resultGeekQ;
             }
+            //redis显示没有库存代表秒杀结束
             if (stock < 0) {
                 log.info("***stock 扣减减少*** stock:{}",stock);
                 redisService.incr(GoodsKey.getMiaoshaGoodsStock, "" + goodsId);
@@ -281,8 +288,8 @@ public class MiaoshaController {
                 //写zk的商品售完标记true
                 if (zooKeeper.exists(CustomerConstant.ZookeeperPathPrefix.PRODUCT_SOLD_OUT, false) == null) {
                     zooKeeper.createNode(CustomerConstant.ZookeeperPathPrefix.PRODUCT_SOLD_OUT,"");
-
                 }
+                //不管zk对应结点原值多少,改成true
                 if (zooKeeper.exists(CustomerConstant.ZookeeperPathPrefix.getZKSoldOutProductPath(goodsId), true) == null) {
                     zooKeeper.createNode(CustomerConstant.ZookeeperPathPrefix.getZKSoldOutProductPath(goodsId), "true");
                 }

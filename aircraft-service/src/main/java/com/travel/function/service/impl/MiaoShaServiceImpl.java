@@ -50,19 +50,20 @@ public class MiaoShaServiceImpl implements MiaoshaService {
 
     @Autowired
     private MiaoShaLogic mSLogic;
-
+    //实际会在第一次数据库使用的时候创建事务
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ResultGeekQ<OrderInfoVo> miaosha(MiaoShaUserVo user, GoodsVo goods) {
 
         ResultGeekQ<OrderInfoVo> resultGeekQ = ResultGeekQ.build();
         try{
-            //减库存 下订单 写入秒杀订单
+            //减库存
             ResultGeekQ<Boolean> result = goodsService.reduceStock(goods);
             if(!ResultGeekQ.isSuccess(result)){
                 resultGeekQ.withErrorCodeAndMessage(ResultStatus.MIAOSHA_REDUCE_FAIL);
                 return resultGeekQ;
             }
+//          下订单
             MiaoShaUser Muser =  new MiaoShaUser();
             BeanUtils.copyProperties(user,Muser);
             OrderInfo orderInfo = mSLogic.createOrder(Muser, goods);
@@ -114,7 +115,7 @@ public class MiaoShaServiceImpl implements MiaoshaService {
             return resultGeekQ;
         }
     }
-
+    //创建秒杀路径
     @Override
     public ResultGeekQ<String> createMiaoshaPath(MiaoShaUserVo user, Long goodsId) {
         ResultGeekQ<String> resultGeekQ = ResultGeekQ.build();
